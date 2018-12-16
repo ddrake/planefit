@@ -61,7 +61,8 @@ def test(n, noise, offset=0):
     ax = fig.gca(projection='3d')
     ax.set_aspect('equal')
     ax.scatter(xyz[:,0],xyz[:,1],xyz[:,2])
-    ax.plot([0,normal[0]*10],[0,normal[1]*10],[0,normal[2]*10])
+    data = list(zip(means, means + normal *10))
+    ax.plot(*data, 'r')
     set_axes_equal(ax)
     plt.show() 
 
