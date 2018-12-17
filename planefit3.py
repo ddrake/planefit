@@ -43,10 +43,9 @@ def solve(xyz):
     indices.remove(idx)
     M = Nml[:, indices]
     w = Nml[:, idx]
-    p, res, rnk, s = la.lstsq(M, w, overwrite_a=True, overwrite_b=True, check_finite=False)
+    p = la.inv(M.T@M)@M.T@w
     normal = np.insert(-p[:], idx, 1)
-    kappa = np.abs(s[0]/s[-1])
-    return normal, means, p, res, rnk, kappa
+    return normal, means
 
 
 def test(n=1000, noise=10, offset=50):
@@ -58,13 +57,9 @@ def test(n=1000, noise=10, offset=50):
     p[0] = 0
     xyz = (np.random.rand(n, 3) - 0.5)*100
     xyz[:, 0] = xyz@p + (np.random.rand(n)-.5)*noise + offset
-    normal, means, p, res, rnk, kappa = solve(xyz)
+    normal, means = solve(xyz)
     print("normal vector 'normal': ", normal)
     print("center point 'means': ", means)
-    print("least square solution 'p': ", p)
-    print("LS residual squared 'res': ", res)
-    print("effective rank of A 'rnk': ", rnk)
-    print("condition number of A 'kappa': ", kappa)
 
     fig = plt.figure()
     ax = fig.gca(projection='3d')

@@ -1,4 +1,4 @@
-import scipy.linalg as la
+import scipy.optimize as opt
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -31,7 +31,7 @@ def set_axes_equal(ax):
     set_axes_radius(ax, origin, radius)
 
 
-def solve(xyz):
+def solve(xyz, tol=1.0e-10):
     """ Solve for normal vector and regression error using la.lstsq
         Expects xyz to be a numpy array with the data 
         x, y, and z as column vectors
@@ -43,13 +43,13 @@ def solve(xyz):
     indices.remove(idx)
     M = Nml[:, indices]
     w = Nml[:, idx]
-    p, res, rnk, s = la.lstsq(M, w, overwrite_a=True, overwrite_b=True, check_finite=False)
-    normal = np.insert(-p[:], idx, 1)
-    kappa = np.abs(s[0]/s[-1])
-    return normal, means, p, res, rnk, kappa
 
+    result = opt.lsq_linear(M, w, tol=tol)
+    x = result.x
+    normal = np.insert(-x[:], idx, 1)
+    return normal, means, result
 
-def test(n=1000, noise=10, offset=50):
+def test(n=1000, noise=10, offset=50, tol=1.0e-10):
     """
         Test the least squares algorithm with a point cloud 
         with a given number of points, noise level and offset
@@ -58,13 +58,17 @@ def test(n=1000, noise=10, offset=50):
     p[0] = 0
     xyz = (np.random.rand(n, 3) - 0.5)*100
     xyz[:, 0] = xyz@p + (np.random.rand(n)-.5)*noise + offset
-    normal, means, p, res, rnk, kappa = solve(xyz)
+    normal, means, result = solve(xyz, tol=tol)
     print("normal vector 'normal': ", normal)
     print("center point 'means': ", means)
-    print("least square solution 'p': ", p)
-    print("LS residual squared 'res': ", res)
-    print("effective rank of A 'rnk': ", rnk)
-    print("condition number of A 'kappa': ", kappa)
+    print("least square solution 'p': ", result.x)
+    print("least square solution 'cost': ", result.cost)
+    print("LS residual squared 'fun': ", result.fun)
+    print("Active_mask 'active_mask': ", result.active_mask)
+    print("nit 'nit': ", result.nit)
+    print("status 'status': ", result.status)
+    print("msg 'message': ", result.message)
+    print("success 'success': ", result.success)
 
     fig = plt.figure()
     ax = fig.gca(projection='3d')
